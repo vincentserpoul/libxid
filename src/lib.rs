@@ -157,7 +157,7 @@ impl Generator {
     }
 
     fn generate(&self, ts: u64) -> ID {
-        let mut buff = [0u8; ID_LEN];
+        let mut buff = [0_u8; ID_LEN];
 
         BigEndian::write_u32(&mut buff, ts as u32);
 
@@ -227,7 +227,7 @@ impl ID {
     }
 
     pub fn decode(input: &str) -> Self {
-        let mut dec = [1u8; 256];
+        let mut dec = [1_u8; 256];
 
         dec[48] = 0 as u8;
         dec[49] = 1 as u8;
@@ -272,7 +272,7 @@ impl ID {
 
         let src = input.as_bytes();
 
-        ID {
+        Self {
             val: [
                 dec[src[0] as usize] << 3 | dec[src[1] as usize] >> 2,
                 dec[src[1] as usize] << 6 | dec[src[2] as usize] << 1 | dec[src[3] as usize] >> 4,
@@ -326,7 +326,7 @@ impl fmt::Display for ID {
 }
 
 impl PartialEq for ID {
-    fn eq(&self, other: &ID) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.val == other.val
     }
 }
@@ -336,23 +336,25 @@ impl From<&str> for ID {
     // longer nightly
     fn from(s: &str) -> Self {
         if s.len() == 20 {
-            return ID::decode(s);
+            return Self::decode(s);
         }
 
-        ID { val: [0u8; ID_LEN] }
+        Self {
+            val: [0_u8; ID_LEN],
+        }
     }
 }
 
 impl Eq for ID {}
 
 impl PartialOrd for ID {
-    fn partial_cmp(&self, other: &ID) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for ID {
-    fn cmp(&self, other: &ID) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.val.cmp(&other.val)
     }
 }
@@ -395,7 +397,7 @@ impl<'de> Deserialize<'de> for ID {
 // ---
 
 fn rand_int() -> AtomicUsize {
-    let mut buff = [0u8; 3];
+    let mut buff = [0_u8; 3];
 
     thread_rng().fill_bytes(&mut buff);
 
@@ -429,10 +431,10 @@ fn read_machine_id() -> [u8; 3] {
     let id = match platform_machine_id() {
         // XXX: https://github.com/rust-lang/rfcs/blob/master/text/0107-pattern-guards-with-bind-by-move.md
         Ok(x) => {
-            if !x.is_empty() {
-                x
-            } else {
+            if x.is_empty() {
                 hostname()
+            } else {
+                x
             }
         }
 
@@ -440,7 +442,7 @@ fn read_machine_id() -> [u8; 3] {
     };
 
     if id.is_empty() {
-        let mut buff = [0u8; 3];
+        let mut buff = [0_u8; 3];
         thread_rng().fill_bytes(&mut buff);
         return buff;
     }
@@ -553,7 +555,7 @@ mod tests {
 
         let start = Instant::now();
 
-        for id in buff.into_iter() {
+        for id in buff {
             id.encode();
         }
 
@@ -579,8 +581,6 @@ mod tests {
         let b = g.new_id().unwrap();
         let c = g.new_id().unwrap();
 
-        assert!(a == a);
-        assert!(a <= a);
         assert!(a != b);
         assert!(a != c);
 
@@ -606,7 +606,7 @@ mod tests {
         assert_eq!(a.val, b.val);
         assert_eq!(a.encode(), b.encode());
 
-        assert_eq!(ID::from("invalid").val, [0u8; ID_LEN]);
+        assert_eq!(ID::from("invalid").val, [0_u8; ID_LEN]);
     }
 
     #[test]
@@ -642,7 +642,7 @@ mod tests {
 
         let start = Instant::now();
 
-        for encoded in buff.into_iter() {
+        for encoded in buff {
             ID::decode(&encoded);
         }
 
@@ -672,6 +672,6 @@ mod tests {
         assert_eq!(src, deserialized);
 
         let invalid: ID = serde_json::from_str("\"invalid\"").unwrap();
-        assert_eq!(invalid.val, [0u8; ID_LEN]);
+        assert_eq!(invalid.val, [0_u8; ID_LEN]);
     }
 }
